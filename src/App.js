@@ -81,8 +81,19 @@ export default class App {
 
   sceneSetup() {
     console.log("Setting up scene...");
-    this.grid.addAgent(new Agent(v3(99, 0, 99), this.radius, v3(0,0,0)));
-    this.grid.addAgent(new Agent(v3(0, 0, 99), this.radius, v3(99,0,0)));
+    this.grid.addAgent(new Agent(v3(99, 0, 99), this.radius, v3(0, 0, 0)));
+    this.grid.addAgent(new Agent(v3(0, 0, 0), this.radius, v3(99, 0, 99)));
+    this.grid.addAgent(new Agent(v3(0, 0, 99), this.radius, v3(99, 0, 0)));
+    for (let i = 0; i < 10; i++) {
+      let start = v3(99, 0, Math.random() * 99);
+      let end = v3(0, 0, Math.random() * 99);
+      this.grid.addAgent(new Agent(start, this.radius, end))
+    }
+    for (let i = 0; i < 10; i++) {
+      let start = v3(0, 0, Math.random() * 99);
+      let end = v3(99, 0, Math.random() * 99);
+      this.grid.addAgent(new Agent(start, this.radius, end))
+    }
 
     this.scene.add(...this.lights);
     this.scene.add(this.grid.genMesh());
@@ -119,7 +130,6 @@ export default class App {
 
   onUpdate() {
     if (window.DEBUG_MODE) {
-      // this.scene.remove(this.scene.getObjectByName('taken'));
       this.scene.remove(this.grid.markerMesh);
       this.scene.add(this.grid.genMarkerMesh());
       this.grid.resetMarkers();
@@ -128,7 +138,7 @@ export default class App {
         this.scene.add(agent.genMarkerMesh());
       })
     }
-    this.grid.assignMarkers2();
+    this.grid.assignMarkers();
     this.grid.agents.forEach(agent => {
       agent.updateVelocity();
       agent.updatePosition();
