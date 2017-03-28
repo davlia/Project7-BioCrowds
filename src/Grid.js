@@ -9,6 +9,7 @@ class Marker {
     this.x = x;
     this.y = y;
     this.takenBy = undefined;
+    this.distanceTo = Infinity;
     this.v = v3(x, 0, y);
   }
 }
@@ -16,9 +17,10 @@ class Marker {
 export default class Grid {
   constructor(agentSize, gridSize) {
     this.agentSize = agentSize;
-    this.agentSizeSq = agentSize * agentSize;
+    this.halfSize = agentSize / 2;
+    this.halfSizeSq = this.halfSize * this.halfSize;
     this.gridSize = gridSize;
-    this.resolution = gridSize / agentSize;
+    this.resolution = gridSize / this.halfSize;
     this.resolutionSq = this.resolution * this.resolution;
     // resolution has to be an integer :\
     this.grid = new Array(this.resolution);
@@ -39,10 +41,11 @@ export default class Grid {
     for (let i = 0; i < this.resolution; i++) {
       for (let j = 0; j < this.resolution; j++) {
         for (let k = 0; k < markersPerCell; k++) {
-          let px = i * this.agentSize + Math.random() * this.agentSize;
-          let py = j * this.agentSize + Math.random() * this.agentSize;
+          let px = i * this.halfSize + Math.random() * this.halfSize;
+          let py = j * this.halfSize + Math.random() * this.halfSize;
           let marker = new Marker(px, py);
           this.markers.push(marker)
+          this.grid[i][j].push(marker);
         }
       }
     }
@@ -57,17 +60,36 @@ export default class Grid {
     // precomputation
     this.agents.forEach(agent => {
       agent.markers = [];
-    })
-    this.markers.forEach(marker => {
+      // console.log(this.getRelevantMarkers(agent.pos.x, agent.pos.z));
+      markers = markers.concat(this.getRelevantMarkers(agent.pos.x, agent.pos.z));
+    });
+
+    markers.forEach(marker => {
       let { v } = marker;
       let closestAgent = min(this.agents, agent => {
         return agent.pos.distanceToSquared(v);
       });
-      if (closestAgent.pos.distanceToSquared(v) < this.agentSizeSq) {
+      if (closestAgent.pos.distanceToSquared(v) < this.halfSizeSq) {
         closestAgent.markers.push(marker);
         marker.takenBy = closestAgent;
       }
-    })
+    });
+  }
+
+  getRelevantMarkers(x, y) {
+    x = Math.floor(x / this.halfSize);
+    y = Math.floor(y / this.halfSize);
+    let markers = [];
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        let dx = x + i;
+        let dy = y + j;
+        if (0 <= dx && dx < this.resolution && 0 <= dy && dy < this.resolution) {
+          markers = markers.concat(this.grid[dx][dy]);
+        }
+      }
+    }
+    return markers;
   }
 
   genMesh() {
@@ -81,7 +103,7 @@ export default class Grid {
 
   genMarkerMesh() {
     let geo = new THREE.Geometry();
-    let mat = new THREE.PointsMaterial({ color: 'black', size: 0.75});
+    let mat = new THREE.PointsMaterial({ color: 'red', size: 0.75});
     let mesh = new THREE.Points(geo, mat);
     this.markerMesh = mesh;
     this.markers.forEach(marker => {

@@ -9,6 +9,7 @@ export default class Agent {
     this.pos = pos;
     this.vel = v3(0, 0, 0);
     this.size = size;
+    this.radius = size / 2;
     this.goal = goal.clone();
     this.color = color || randColor();
     this.markers = [];
@@ -52,12 +53,12 @@ Clamp the velocity to some maximum (you probably want to choose a max speed such
   }
 
   genMesh() {
-    let geo = new THREE.CylinderGeometry(this.size, this.size, this.size, 16);
+    let geo = new THREE.CylinderGeometry(1, 1, 4, 16);
     let mat = new THREE.MeshLambertMaterial({side: THREE.DoubleSide, color: this.color});
     this.mesh = new THREE.Mesh(geo, mat);
 
-    let markerSize = v3(this.size / 16, this.size / 4, this.size / 16);
-    scaleWorldSpace(this.mesh, markerSize);
+    // let agentSize = v3(0.25, 1, 0.25);
+    // scaleWorldSpace(this.mesh, agentSize);
     // geo.scale(this.size / 16, this.size / 4, this.size / 16);
     translateWorldSpace(this.mesh, this.pos);
 

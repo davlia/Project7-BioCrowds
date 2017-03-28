@@ -19,8 +19,8 @@ export default class App {
     this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
     this.renderer = new THREE.WebGLRenderer( { antialias: true } );
     this.stats = new Stats();
-    this.radius = 4;
-    this.grid = new Grid(this.radius, 100);
+    this.size = 8;
+    this.grid = new Grid(this.size, 100);
   }
 
   run() {
@@ -81,18 +81,18 @@ export default class App {
 
   sceneSetup() {
     console.log("Setting up scene...");
-    this.grid.addAgent(new Agent(v3(99, 0, 99), this.radius, v3(0, 0, 0)));
-    this.grid.addAgent(new Agent(v3(0, 0, 0), this.radius, v3(99, 0, 99)));
-    this.grid.addAgent(new Agent(v3(0, 0, 99), this.radius, v3(99, 0, 0)));
+    // this.grid.addAgent(new Agent(v3(99, 0, 99), this.size, v3(0, 0, 0)));
+    // this.grid.addAgent(new Agent(v3(0, 0, 0), this.size, v3(99, 0, 99)));
+    // this.grid.addAgent(new Agent(v3(0, 0, 99), this.size, v3(99, 0, 0)));
     for (let i = 0; i < 10; i++) {
       let start = v3(99, 0, Math.random() * 99);
       let end = v3(0, 0, Math.random() * 99);
-      this.grid.addAgent(new Agent(start, this.radius, end))
+      this.grid.addAgent(new Agent(start, this.size, end));
     }
     for (let i = 0; i < 10; i++) {
       let start = v3(0, 0, Math.random() * 99);
       let end = v3(99, 0, Math.random() * 99);
-      this.grid.addAgent(new Agent(start, this.radius, end))
+      this.grid.addAgent(new Agent(start, this.size, end));
     }
 
     this.scene.add(...this.lights);
