@@ -1,8 +1,7 @@
 import Agent from './Agent.js'
-import { rotateWorldSpace, translateWorldSpace, min, v3 } from './Util.js';
+import { rotateWorldSpace, translateWorldSpace, min, v3, v2 } from './Util.js';
 const THREE = require('three');
 
-const NUM_MARKERS = 10000;
 
 class Marker {
   constructor(x, y) {
@@ -15,7 +14,7 @@ class Marker {
 }
 
 export default class Grid {
-  constructor(agentSize, gridSize) {
+  constructor(agentSize, gridSize, scenario, numMarkers) {
     this.agentSize = agentSize;
     this.halfSize = agentSize / 2;
     this.halfSizeSq = this.halfSize * this.halfSize;
@@ -32,8 +31,10 @@ export default class Grid {
     }
     this.agents = [];
     this.markers = [];
-    this.numMarkers = NUM_MARKERS;
+    this.numMarkers = numMarkers;
     this.scatter();
+    this.scenarioSetup();
+    this.setScenario(scenario);
   }
 
   scatter() {
@@ -53,6 +54,45 @@ export default class Grid {
 
   addAgent(agent) {
     this.agents.push(agent);
+  }
+
+  setAgents(agents) {
+    this.agents = agents;
+  }
+
+  scenarioSetup() {
+    this.scenario = {};
+
+    this.scenario['default'] = [
+      new Agent(v3(50, 0, 0), this.agentSize, v3(50, 0, 99)),
+      new Agent(v3(50, 0, 99), this.agentSize, v3(50, 0, 0))
+    ];
+
+
+    this.scenario['side to side'] = [];
+    for (let i = 0; i < 10; i++) {
+      let start = v3(99, 0, Math.random() * 99);
+      let end = v3(0, 0, Math.random() * 99);
+      this.scenario['side to side'].push(new Agent(start, this.agentSize, end));
+    }
+    for (let i = 0; i < 10; i++) {
+      let start = v3(0, 0, Math.random() * 99);
+      let end = v3(99, 0, Math.random() * 99);
+      this.scenario['side to side'].push(new Agent(start, this.agentSize, end));
+    }
+
+    this.scenario['ring'] = [];
+    for (let i = 0; i < 10; i++) {
+      let ratio = Math.tan(Math.PI * i / 10);
+      let v = v2(1, ratio).normalize().multiplyScalar(i % 2 === 0 ? -40 : 40);
+      let start = v3(v.x + this.gridSize / 2, 0, v.y + this.gridSize / 2);
+      let end = v3(-v.x + this.gridSize / 2, 0, -v.y + this.gridSize / 2);
+      this.scenario['ring'].push(new Agent(start, this.agentSize, end));
+    }
+  }
+
+  setScenario(scenario) {
+    this.setAgents(this.scenario[scenario]);
   }
 
   assignMarkers() {

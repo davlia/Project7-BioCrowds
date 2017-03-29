@@ -9,7 +9,9 @@ import Agent from './Agent.js';
 
 import { rotateAroundWorldAxis, v3 } from './Util.js';
 
-window.DEBUG_MODE = 1;
+window.DEBUG_MODE = true;
+window.PATROL_MODE = true;
+window.DEBUG_HYSTERESIS = true;
 window.log = console.log;
 
 export default class App {
@@ -19,8 +21,11 @@ export default class App {
     this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
     this.renderer = new THREE.WebGLRenderer( { antialias: true } );
     this.stats = new Stats();
-    this.size = 8;
-    this.grid = new Grid(this.size, 100);
+    this.agentSize = 8;
+    this.scenario = 'default';
+    this.numMarkers = 10000;
+    this.gridSize = 100;
+    this.grid = new Grid(this.agentSize, this.gridSize, this.scenario, this.numMarkers);
   }
 
   run() {
@@ -37,6 +42,7 @@ export default class App {
     this.rendererSetup();
     this.statsSetup();
     this.lightSetup();
+    this.guiSetup();
     this.sceneSetup();
   }
 
@@ -79,21 +85,41 @@ export default class App {
     // this.scene.background = this.background;
   }
 
+  guiSetup() {
+    let gui = this.gui;
+    gui.add(this, 'scenario', ['default', 'side to side', 'ring']).onChange(val => {
+      this.isUpdating = true;
+      this.clearScene()
+      this.grid = new Grid(this.agentSize, this.gridSize, this.scenario, this.numMarkers);
+      this.sceneSetup();
+      this.isUpdating = false;
+    });
+    gui.add(this, 'numMarkers', 1000, 20000).step(1000).onChange(val => {
+      this.isUpdating = true;
+      this.clearScene()
+      this.grid = new Grid(this.agentSize, this.gridSize, this.scenario, this.numMarkers);
+      this.sceneSetup();
+      this.isUpdating = false;
+    });
+
+    gui.add(this, 'agentSize', [1, 2, 4, 8, 10, 20, 25, 50]).onChange(val => {
+      this.isUpdating = true;
+      this.clearScene()
+      this.grid = new Grid(this.agentSize, this.gridSize, this.scenario, this.numMarkers);
+      this.sceneSetup();
+      this.isUpdating = false;
+    });
+
+    gui.add(window, 'PATROL_MODE');
+    gui.add(window, 'DEBUG_MODE').onChange(val => {
+      if (val) {
+        window.DEBUG_HYSTERESIS = true;
+      }
+    });
+  }
+
   sceneSetup() {
     console.log("Setting up scene...");
-    // this.grid.addAgent(new Agent(v3(99, 0, 99), this.size, v3(0, 0, 0)));
-    // this.grid.addAgent(new Agent(v3(0, 0, 0), this.size, v3(99, 0, 99)));
-    // this.grid.addAgent(new Agent(v3(0, 0, 99), this.size, v3(99, 0, 0)));
-    for (let i = 0; i < 10; i++) {
-      let start = v3(99, 0, Math.random() * 99);
-      let end = v3(0, 0, Math.random() * 99);
-      this.grid.addAgent(new Agent(start, this.size, end));
-    }
-    for (let i = 0; i < 10; i++) {
-      let start = v3(0, 0, Math.random() * 99);
-      let end = v3(99, 0, Math.random() * 99);
-      this.grid.addAgent(new Agent(start, this.size, end));
-    }
 
     this.scene.add(...this.lights);
     this.scene.add(this.grid.genMesh());
@@ -129,14 +155,23 @@ export default class App {
   }
 
   onUpdate() {
+    if (this.isUpdating) {
+      return;
+    }
     if (window.DEBUG_MODE) {
       this.scene.remove(this.grid.markerMesh);
       this.scene.add(this.grid.genMarkerMesh());
       this.grid.resetMarkers();
-      this.grid.agents.map(agent => {
+      this.grid.agents.forEach(agent => {
         this.scene.remove(agent.markerMesh);
         this.scene.add(agent.genMarkerMesh());
       })
+    } else if (window.DEBUG_HYSTERESIS){
+      this.scene.remove(this.grid.markerMesh);
+      this.grid.agents.forEach(agent => {
+        this.scene.remove(agent.markerMesh);
+      });
+      window.DEBUG_HYSTERESIS = false;
     }
     this.grid.assignMarkers();
     this.grid.agents.forEach(agent => {

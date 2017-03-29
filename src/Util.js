@@ -36,6 +36,13 @@ const v3 = (...args) => {
   return new THREE.Vector3(...args);
 };
 
+const v2 = (...args) => {
+  if (args.length === 1) {
+    return new THREE.Vector2(args[0], args[0]);
+  }
+  return new THREE.Vector2(...args);
+};
+
 const c = (...args) => {
   console.log(args);
   return new THREE.Color(...args);
@@ -84,4 +91,4 @@ const randColor = () => {
   return randKey;
 }
 
-export { rotateAroundWorldAxis, rotateWorldSpace, translateWorldSpace, scaleWorldSpace, min, v3, c, randColor };
+export { rotateAroundWorldAxis, rotateWorldSpace, translateWorldSpace, scaleWorldSpace, min, v3, v2, c, randColor };

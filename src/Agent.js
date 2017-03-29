@@ -45,7 +45,7 @@ Clamp the velocity to some maximum (you probably want to choose a max speed such
     this.pos.add(this.vel);
     translateWorldSpace(this.mesh, this.vel);
     // patrolling
-    if (this.pos.distanceToSquared(this.goal) < 10) {
+    if (window.PATROL_MODE && this.pos.distanceToSquared(this.goal) < 10) {
       let tmp = this.goal;
       this.goal = this.startPos;
       this.startPos = tmp;
