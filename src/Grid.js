@@ -9,7 +9,7 @@ class Marker {
     this.x = x;
     this.y = y;
     this.takenBy = undefined;
-    this.distanceTo = Infinity;
+    this.distanceToSquared = Infinity;
     this.v = v3(x, 0, y);
   }
 }
@@ -56,22 +56,29 @@ export default class Grid {
   }
 
   assignMarkers() {
-    let markers = [];
     // precomputation
     this.agents.forEach(agent => {
+      // reset
+      agent.markers.forEach(marker => {
+        marker.takenBy = undefined;
+        marker.distanceToSquared = Infinity;
+      });
       agent.markers = [];
-      // console.log(this.getRelevantMarkers(agent.pos.x, agent.pos.z));
-      markers = markers.concat(this.getRelevantMarkers(agent.pos.x, agent.pos.z));
+
+      // marker lookup
+      this.getRelevantMarkers(agent.pos.x, agent.pos.z).forEach(marker => {
+        let dist = marker.v.distanceToSquared(agent.pos);
+        if (dist < this.halfSizeSq && dist < marker.distanceToSquared) {
+          marker.takenBy = agent;
+          marker.distanceToSquared = dist;
+        }
+      });
     });
 
-    markers.forEach(marker => {
-      let { v } = marker;
-      let closestAgent = min(this.agents, agent => {
-        return agent.pos.distanceToSquared(v);
-      });
-      if (closestAgent.pos.distanceToSquared(v) < this.halfSizeSq) {
-        closestAgent.markers.push(marker);
-        marker.takenBy = closestAgent;
+    // inverse assignment
+    this.markers.forEach(marker => {
+      if (marker.takenBy) {
+        marker.takenBy.markers.push(marker);
       }
     });
   }
@@ -103,7 +110,7 @@ export default class Grid {
 
   genMarkerMesh() {
     let geo = new THREE.Geometry();
-    let mat = new THREE.PointsMaterial({ color: 'red', size: 0.75});
+    let mat = new THREE.PointsMaterial({ color: 'black', size: 0.75});
     let mesh = new THREE.Points(geo, mat);
     this.markerMesh = mesh;
     this.markers.forEach(marker => {
